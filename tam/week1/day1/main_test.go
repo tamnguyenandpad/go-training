@@ -8,13 +8,13 @@ import (
 func Test_fib(t *testing.T) {
 	tests := [][2]int{
 		{-1, -1},
-		{0, -1},
-		{1, 0},
+		{0, 0},
+		{1, 1},
 		{2, 1},
-		{3, 1},
-		{4, 2},
-		{5, 3},
-		{6, 5},
+		{3, 2},
+		{4, 3},
+		{5, 5},
+		{6, 8},
 	}
 	for _, tt := range tests {
 		tc := fmt.Sprintf("Fibonacci number at position %d is %d", tt[0], tt[1])
