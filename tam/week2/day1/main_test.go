@@ -5,40 +5,41 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/tuannguyenandpadcojp/go-training/tam/week2/day1/pool"
 	"go.uber.org/goleak"
 )
 
 func TestWorkerPool(t *testing.T) {
-	pool := NewWorkerPool(3, 10)
-	pool.Start(context.Background())
+	p := pool.NewWorkerPool(1, 10)
+	p.Start(context.Background())
 
-	var mockJobHandlerSuccess = func(ctx context.Context) Result {
-		return Result{JobID: "mock-job", State: 1}
+	var mockJobHandlerSuccess = func(ctx context.Context) pool.Result {
+		return pool.Result{JobID: "mock-job", State: 1}
 	}
-	var mockJobHandlerFailed = func(ctx context.Context) Result {
-		return Result{JobID: "mock-job", State: 0}
+	var mockJobHandlerFailed = func(ctx context.Context) pool.Result {
+		return pool.Result{JobID: "mock-job", State: 0}
 	}
 
 	// Submit 10 jobs - expected 5 success and 5 failed
 	for i := 0; i < 10; i++ {
-		job := Job{ID: fmt.Sprintf("job-%d", i), Handler: mockJobHandlerSuccess}
+		job := pool.Job{ID: fmt.Sprintf("job-%d", i), Handler: mockJobHandlerSuccess}
 		if i%2 == 0 {
 			job.Handler = mockJobHandlerFailed
 		}
-		if err := pool.Submit(job); err != nil {
+		if err := p.Submit(job); err != nil {
 			t.Errorf("Failed to submit job: %v", err)
 		}
 	}
 
 	// Release the pool and closed
-	pool.Release()
+	p.Release()
 
 	// Check results
-	if pool.totalSucceed != 5 {
-		t.Errorf("Expected 10 successful jobs, got %d", pool.totalSucceed)
+	if p.TotalSucceed != 5 {
+		t.Errorf("Expected 10 successful jobs, got %d", p.TotalSucceed)
 	}
-	if pool.totalFailed != 5 {
-		t.Errorf("Expected 0 failed jobs, got %d", pool.totalFailed)
+	if p.TotalFailed != 5 {
+		t.Errorf("Expected 0 failed jobs, got %d", p.TotalFailed)
 	}
 
 	// verify no goroutine leak
@@ -47,52 +48,42 @@ func TestWorkerPool(t *testing.T) {
 
 func TestWorkerPoolNonBlocking(t *testing.T) {
 	// Create a worker pool with 3 workers and a job queue of size 5
-	pool := NewWorkerPool(3, 5, WithNonBlocking)
-	pool.Start(context.Background())
+	p := pool.NewWorkerPool(3, 5, pool.WithNonBlocking)
+	p.Start(context.Background())
 
 	wait := make(chan struct{})
-	var blockingHandler = func(ctx context.Context) Result {
+	var handler = func(ctx context.Context) pool.Result {
 		<-wait
-		return Result{JobID: "mock-job", State: 1}
+		return pool.Result{JobID: "mock-job", State: 1}
 	}
 
-	var handler = func(ctx context.Context) Result {
-		return Result{JobID: "mock-job", State: 0}
-	}
-
-	// Submit 10 jobs and the job 1 -> 5 takes longer time to process
-	// The job 6 -> 10 will be rejected
-	// We expect the pool to process 5 jobs successfully and reject 5 jobs
-	// We simulate the job 1 -> 5 takes longer time to process by using a blocking handler
-	// until the job 6 -> 10 is submitted
+	submitErrs := make([]error, 0, 10)
 	for i := 0; i < 10; i++ {
-		job := Job{ID: fmt.Sprintf("job-%d", i), Handler: handler}
-		if i < 5 {
-			job.Handler = blockingHandler
-		}
-		err := pool.Submit(job)
-		if i < 5 && err != nil {
-			t.Errorf("Failed to submit job: %v", err)
-		}
-		if i >= 5 && err == nil {
-			t.Errorf("Expected job queue to be full, but job was submitted successfully")
+		job := pool.Job{ID: fmt.Sprintf("job-%d", i), Handler: handler}
+		if err := p.Submit(job); err != nil {
+			submitErrs = append(submitErrs, err)
 		}
 	}
 
 	// Close the wait channel to unblock the blocking handlers
 	close(wait)
 
-	// Release the pool ans closed
-	pool.Release()
+	// Release the pool and closed
+	p.Release()
 
-	// Check results
-	if pool.totalSucceed != 5 {
-		t.Errorf("Expected 5 successful jobs, got %d", pool.totalSucceed)
-	}
-	if pool.totalFailed != 0 {
-		t.Errorf("Expected 0 failed jobs, got %d", pool.totalFailed)
+	// Submit job progress from worst to best for the pool which has 3 workers and a job queue of size 5
+	// - 3 workers process 3 jobs, 5 jobs are in the queue, 2 jobs are rejected => 8 jobs are submitted and handled at final
+	// - 2 workers process 2 jobs, 5 jobs are in the queue, 3 jobs are rejected => 7 jobs are submitted and handled at final
+	// - 1 worker process 1 job, 5 jobs are in the queue, 4 jobs are rejected => 6 jobs are submitted and handled at final
+	// - 0 worker process 0 job, 5 jobs are in the queue, 5 jobs are rejected => 5 jobs are submitted and handled at final
+
+	if len(submitErrs) > 5 {
+		t.Errorf("Expected submit errs <= 5, got %d", len(submitErrs))
 	}
 
-	// verify no goroutine leak
+	if p.TotalSucceed < 5 || p.TotalSucceed > 8 {
+		t.Errorf("Expected 5 to 8 successful jobs, got %d", p.TotalSucceed)
+	}
+
 	goleak.VerifyNone(t)
 }
