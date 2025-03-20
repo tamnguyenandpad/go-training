@@ -12,9 +12,10 @@ func fib(n int) int {
 		return -1
 	}
 
-	if n == 0 {
-		fmt.Println("\nThe Fibonacci number at position 0 is 0")
-		return 0
+	if n < 2 {
+	        // n = 0, output = 0
+	        // n = 1, output = 1
+		return n
 	}
 
 	n1, n2 := 0, 1
