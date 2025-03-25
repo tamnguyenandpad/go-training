@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package tenant.v1;
+
+option go_package = "tenant/v1";
+
+service TenantService {
+  rpc CreateTenant(CreateTenantRequest) returns (CreateTenantResponse);
+}
+
+message CreateTenantRequest {
+  string name = 1;
+  string owner_email = 2;
+}
+
+message CreateTenantResponse {
+  string id = 1;
+}

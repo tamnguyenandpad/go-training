@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  grpc-multi-tenant:
+    image: grpc-multi-tenant
+    build:
+      context: ../../
+      dockerfile: tam/grpc-multi-tenant/Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: docker
+      DB_PASSWORD: password
+      DB_NAME: database
+
+  mysql:
+    image: mysql:8.0.28
+    container_name: grpc_database
+    restart: always
+    environment:
+      MYSQL_DATABASE: database
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./tam/grpc-multi-tenant/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_data:
