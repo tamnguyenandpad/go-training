@@ -6,6 +6,8 @@ option go_package = "tenant/v1";
 
 service TenantService {
   rpc CreateTenant(CreateTenantRequest) returns (CreateTenantResponse);
+  rpc InviteMember(InviteMemberRequest) returns (InviteMemberResponse);
+  rpc AcceptInvitation(AcceptInvitationRequest) returns (AcceptInvitationResponse);
 }
 
 message CreateTenantRequest {
@@ -15,4 +17,24 @@ message CreateTenantRequest {
 
 message CreateTenantResponse {
   string id = 1;
+  string name = 2;
+  string owner_email = 3;
+  string created_at = 4;
+}
+
+message InviteMemberRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+}
+
+message InviteMemberResponse {
+  string member_id = 1;
+}
+
+message AcceptInvitationRequest {
+  string member_id = 1;
+}
+
+message AcceptInvitationResponse {
+  string status = 1;
 }

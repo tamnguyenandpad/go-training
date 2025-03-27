@@ -76,6 +76,9 @@ func (x *CreateTenantRequest) GetOwnerEmail() string {
 type CreateTenantResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	OwnerEmail    string                 `protobuf:"bytes,3,opt,name=owner_email,json=ownerEmail,proto3" json:"owner_email,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,6 +120,211 @@ func (x *CreateTenantResponse) GetId() string {
 	return ""
 }
 
+func (x *CreateTenantResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateTenantResponse) GetOwnerEmail() string {
+	if x != nil {
+		return x.OwnerEmail
+	}
+	return ""
+}
+
+func (x *CreateTenantResponse) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type InviteMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InviteMemberRequest) Reset() {
+	*x = InviteMemberRequest{}
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InviteMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InviteMemberRequest) ProtoMessage() {}
+
+func (x *InviteMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InviteMemberRequest.ProtoReflect.Descriptor instead.
+func (*InviteMemberRequest) Descriptor() ([]byte, []int) {
+	return file_proto_tenant_v1_tenant_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *InviteMemberRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *InviteMemberRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type InviteMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemberId      string                 `protobuf:"bytes,1,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InviteMemberResponse) Reset() {
+	*x = InviteMemberResponse{}
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InviteMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InviteMemberResponse) ProtoMessage() {}
+
+func (x *InviteMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InviteMemberResponse.ProtoReflect.Descriptor instead.
+func (*InviteMemberResponse) Descriptor() ([]byte, []int) {
+	return file_proto_tenant_v1_tenant_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *InviteMemberResponse) GetMemberId() string {
+	if x != nil {
+		return x.MemberId
+	}
+	return ""
+}
+
+type AcceptInvitationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MemberId      string                 `protobuf:"bytes,1,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptInvitationRequest) Reset() {
+	*x = AcceptInvitationRequest{}
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptInvitationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptInvitationRequest) ProtoMessage() {}
+
+func (x *AcceptInvitationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptInvitationRequest.ProtoReflect.Descriptor instead.
+func (*AcceptInvitationRequest) Descriptor() ([]byte, []int) {
+	return file_proto_tenant_v1_tenant_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *AcceptInvitationRequest) GetMemberId() string {
+	if x != nil {
+		return x.MemberId
+	}
+	return ""
+}
+
+type AcceptInvitationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptInvitationResponse) Reset() {
+	*x = AcceptInvitationResponse{}
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptInvitationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptInvitationResponse) ProtoMessage() {}
+
+func (x *AcceptInvitationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tenant_v1_tenant_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptInvitationResponse.ProtoReflect.Descriptor instead.
+func (*AcceptInvitationResponse) Descriptor() ([]byte, []int) {
+	return file_proto_tenant_v1_tenant_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AcceptInvitationResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 var File_proto_tenant_v1_tenant_proto protoreflect.FileDescriptor
 
 const file_proto_tenant_v1_tenant_proto_rawDesc = "" +
@@ -125,11 +333,27 @@ const file_proto_tenant_v1_tenant_proto_rawDesc = "" +
 	"\x13CreateTenantRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1f\n" +
 	"\vowner_email\x18\x02 \x01(\tR\n" +
-	"ownerEmail\"&\n" +
+	"ownerEmail\"z\n" +
 	"\x14CreateTenantResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id2`\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\vowner_email\x18\x03 \x01(\tR\n" +
+	"ownerEmail\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\"K\n" +
+	"\x13InviteMemberRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"3\n" +
+	"\x14InviteMemberResponse\x12\x1b\n" +
+	"\tmember_id\x18\x01 \x01(\tR\bmemberId\"6\n" +
+	"\x17AcceptInvitationRequest\x12\x1b\n" +
+	"\tmember_id\x18\x01 \x01(\tR\bmemberId\"2\n" +
+	"\x18AcceptInvitationResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status2\x8e\x02\n" +
 	"\rTenantService\x12O\n" +
-	"\fCreateTenant\x12\x1e.tenant.v1.CreateTenantRequest\x1a\x1f.tenant.v1.CreateTenantResponseB\vZ\ttenant/v1b\x06proto3"
+	"\fCreateTenant\x12\x1e.tenant.v1.CreateTenantRequest\x1a\x1f.tenant.v1.CreateTenantResponse\x12O\n" +
+	"\fInviteMember\x12\x1e.tenant.v1.InviteMemberRequest\x1a\x1f.tenant.v1.InviteMemberResponse\x12[\n" +
+	"\x10AcceptInvitation\x12\".tenant.v1.AcceptInvitationRequest\x1a#.tenant.v1.AcceptInvitationResponseB\vZ\ttenant/v1b\x06proto3"
 
 var (
 	file_proto_tenant_v1_tenant_proto_rawDescOnce sync.Once
@@ -143,16 +367,24 @@ func file_proto_tenant_v1_tenant_proto_rawDescGZIP() []byte {
 	return file_proto_tenant_v1_tenant_proto_rawDescData
 }
 
-var file_proto_tenant_v1_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_tenant_v1_tenant_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_proto_tenant_v1_tenant_proto_goTypes = []any{
-	(*CreateTenantRequest)(nil),  // 0: tenant.v1.CreateTenantRequest
-	(*CreateTenantResponse)(nil), // 1: tenant.v1.CreateTenantResponse
+	(*CreateTenantRequest)(nil),      // 0: tenant.v1.CreateTenantRequest
+	(*CreateTenantResponse)(nil),     // 1: tenant.v1.CreateTenantResponse
+	(*InviteMemberRequest)(nil),      // 2: tenant.v1.InviteMemberRequest
+	(*InviteMemberResponse)(nil),     // 3: tenant.v1.InviteMemberResponse
+	(*AcceptInvitationRequest)(nil),  // 4: tenant.v1.AcceptInvitationRequest
+	(*AcceptInvitationResponse)(nil), // 5: tenant.v1.AcceptInvitationResponse
 }
 var file_proto_tenant_v1_tenant_proto_depIdxs = []int32{
 	0, // 0: tenant.v1.TenantService.CreateTenant:input_type -> tenant.v1.CreateTenantRequest
-	1, // 1: tenant.v1.TenantService.CreateTenant:output_type -> tenant.v1.CreateTenantResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: tenant.v1.TenantService.InviteMember:input_type -> tenant.v1.InviteMemberRequest
+	4, // 2: tenant.v1.TenantService.AcceptInvitation:input_type -> tenant.v1.AcceptInvitationRequest
+	1, // 3: tenant.v1.TenantService.CreateTenant:output_type -> tenant.v1.CreateTenantResponse
+	3, // 4: tenant.v1.TenantService.InviteMember:output_type -> tenant.v1.InviteMemberResponse
+	5, // 5: tenant.v1.TenantService.AcceptInvitation:output_type -> tenant.v1.AcceptInvitationResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -169,7 +401,7 @@ func file_proto_tenant_v1_tenant_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_tenant_v1_tenant_proto_rawDesc), len(file_proto_tenant_v1_tenant_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
