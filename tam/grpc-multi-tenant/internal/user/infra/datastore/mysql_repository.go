@@ -28,3 +28,18 @@ func (t *UserMysqlRepository) Create(ctx context.Context, user domain.User) (*do
 
 	return &user, nil
 }
+
+func (t *UserMysqlRepository) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
+	query := "SELECT id, tenant_id, email, name, created_at FROM users WHERE id = ?"
+	row := t.db.QueryRowContext(ctx, query, userID)
+
+	var user domain.User
+	if err := row.Scan(&user.ID, &user.TenantID, &user.Email, &user.Name, &user.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found: %v", err)
+		}
+		return nil, fmt.Errorf("failed to fetch user: %v", err)
+	}
+
+	return &user, nil
+}

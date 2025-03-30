@@ -40,6 +40,19 @@ func (t *TenantMysqlRepository) CreateMember(ctx context.Context, member domain.
 	return &member, nil
 }
 
+func (t *TenantMysqlRepository) GetMemberByUserID(ctx context.Context, userID string) (*domain.Member, error) {
+	query := "SELECT id, tenant_id, user_id, status, invited_at, accepted_at FROM members WHERE user_id = ?"
+	row := t.db.QueryRowContext(ctx, query, userID)
+	var member domain.Member
+	if err := row.Scan(&member.ID, &member.TenantID, &member.UserID, &member.Status, &member.InvitedAt, &member.AcceptedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("member not found: %v", err)
+		}
+		return nil, fmt.Errorf("failed to fetch member: %v", err)
+	}
+	return &member, nil
+}
+
 func (t *TenantMysqlRepository) UpdateMember(ctx context.Context, memberUpdateData domain.MemberUpdateData) (*domain.Member, error) {
 	updateQuery := "UPDATE members SET status = ?, accepted_at = ? WHERE id = ?"
 	_, err := t.db.ExecContext(ctx, updateQuery, memberUpdateData.Status, memberUpdateData.AcceptedAt, memberUpdateData.MemberID)
@@ -56,4 +69,34 @@ func (t *TenantMysqlRepository) UpdateMember(ctx context.Context, memberUpdateDa
 	}
 
 	return &updatedMember, nil
+}
+
+func (t *TenantMysqlRepository) GetTenantByID(ctx context.Context, tenantID string) (*domain.Tenant, error) {
+	query := "SELECT id, name, owner_email, created_at FROM tenants WHERE id = ?"
+	row := t.db.QueryRowContext(ctx, query, tenantID)
+
+	var tenant domain.Tenant
+	if err := row.Scan(&tenant.ID, &tenant.Name, &tenant.OwnerEmail, &tenant.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("tenant not found from repository: %v", err)
+		}
+		return nil, fmt.Errorf("failed to fetch tenant: %v", err)
+	}
+
+	return &tenant, nil
+}
+
+func (t *TenantMysqlRepository) GetMemberById(ctx context.Context, memberID string) (*domain.Member, error) {
+	query := "SELECT id, tenant_id, user_id, status, invited_at, accepted_at FROM members WHERE id = ?"
+	row := t.db.QueryRowContext(ctx, query, memberID)
+
+	var member domain.Member
+	if err := row.Scan(&member.ID, &member.TenantID, &member.UserID, &member.Status, &member.InvitedAt, &member.AcceptedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("member not found: %v", err)
+		}
+		return nil, fmt.Errorf("failed to fetch member: %v", err)
+	}
+
+	return &member, nil
 }

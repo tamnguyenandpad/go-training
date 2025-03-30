@@ -13,7 +13,7 @@ type CreateMemberInput struct {
 	UserID   string
 }
 
-type CreateMemberOutput struct {
+type MemberOutput struct {
 	ID         string
 	TenantID   string
 	UserID     string
@@ -21,7 +21,6 @@ type CreateMemberOutput struct {
 	InvitedAt  *time.Time
 	AcceptedAt *time.Time
 }
-
 type UpdateMemberInput struct {
 	MemberID string
 }
@@ -30,7 +29,7 @@ type UpdateMemberOutput struct {
 	Status string
 }
 
-func (a *appplication) CreateMember(ctx context.Context, input CreateMemberInput) (*CreateMemberOutput, error) {
+func (a *application) CreateMember(ctx context.Context, input CreateMemberInput) (*MemberOutput, error) {
 	memberId := uuid.New().String()
 	invitedAt := time.Now()
 
@@ -45,7 +44,7 @@ func (a *appplication) CreateMember(ctx context.Context, input CreateMemberInput
 	if err != nil {
 		return nil, err
 	}
-	return &CreateMemberOutput{
+	return &MemberOutput{
 		ID:         res.ID,
 		TenantID:   res.TenantID,
 		UserID:     res.UserID,
@@ -55,7 +54,7 @@ func (a *appplication) CreateMember(ctx context.Context, input CreateMemberInput
 	}, nil
 }
 
-func (a *appplication) UpdateMember(ctx context.Context, input UpdateMemberInput) (*UpdateMemberOutput, error) {
+func (a *application) UpdateMember(ctx context.Context, input UpdateMemberInput) (*UpdateMemberOutput, error) {
 	status := "accepted"
 	acceptedAt := time.Now()
 
@@ -71,4 +70,45 @@ func (a *appplication) UpdateMember(ctx context.Context, input UpdateMemberInput
 	return &UpdateMemberOutput{
 		Status: res.Status,
 	}, nil
+}
+
+func (a *application) GetMemberByUserID(ctx context.Context, userID string) (*MemberOutput, error) {
+	member, err := a.tenantRepo.GetMemberByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &MemberOutput{
+		ID:         member.ID,
+		TenantID:   member.TenantID,
+		UserID:     member.UserID,
+		Status:     member.Status,
+		InvitedAt:  member.InvitedAt,
+		AcceptedAt: member.AcceptedAt,
+	}, nil
+}
+
+func (a *application) GetMemberByID(ctx context.Context, memberID string) (*MemberOutput, error) {
+	member, err := a.tenantRepo.GetMemberById(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	return &MemberOutput{
+		ID:         member.ID,
+		TenantID:   member.TenantID,
+		UserID:     member.UserID,
+		Status:     member.Status,
+		InvitedAt:  member.InvitedAt,
+		AcceptedAt: member.AcceptedAt,
+	}, nil
+}
+
+func (a *application) CheckUserAlreadyAMember(ctx context.Context, tenantID string, userID string) bool {
+	member, err := a.tenantRepo.GetMemberByUserID(ctx, userID)
+	if err != nil {
+		return false
+	}
+	if member.TenantID == tenantID && member.Status == "accepted" {
+		return true
+	}
+	return false
 }

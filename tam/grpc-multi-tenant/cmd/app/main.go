@@ -57,8 +57,8 @@ func main() {
 	userApplication := user_app.NewApplication(userRepository)
 
 	// Initialize service
-	tenantGrpcService := tenant_ports.NewGrpcServer(tenantApplication)
-	userGrpcService := user_ports.NewGrpcServer(userApplication)
+	tenantGrpcService := tenant_ports.NewGrpcServer(tenantApplication, userApplication)
+	userGrpcService := user_ports.NewGrpcServer(userApplication, tenantApplication)
 
 	// Register service
 	tenant_pb.RegisterTenantServiceServer(grpcServer, tenantGrpcService)

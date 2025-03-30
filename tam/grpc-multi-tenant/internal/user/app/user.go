@@ -24,6 +24,7 @@ type Output struct {
 
 type Application interface {
 	CreateUser(ctx context.Context, input Input) (*Output, error)
+	GetUserByID(ctx context.Context, userID string) (*Output, error)
 }
 
 type application struct {
@@ -57,5 +58,18 @@ func (a *application) CreateUser(ctx context.Context, input Input) (*Output, err
 		Name:      res.Name,
 		CreatedAt: res.CreatedAt,
 	}, nil
+}
 
+func (a *application) GetUserByID(ctx context.Context, userID string) (*Output, error) {
+	user, err := a.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &Output{
+		ID:        user.ID,
+		TenantID:  user.TenantID,
+		Email:     user.Email,
+		Name:      user.Name,
+		CreatedAt: user.CreatedAt,
+	}, nil
 }
