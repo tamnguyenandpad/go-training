@@ -19,8 +19,8 @@ services:
     container_name: grpc_database
     restart: always
     environment:
-      MYSQL_DATABASE: database
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: database
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     ports:
