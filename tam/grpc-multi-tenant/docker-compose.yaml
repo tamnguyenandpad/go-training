@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  grpc-multi-tenant:
+    image: grpc-multi-tenant
+    build:
+      context: ../../
+      dockerfile: tam/grpc-multi-tenant/Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - docker.env
+
+  mysql:
+    image: mysql:8.0.28
+    container_name: grpc_database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
