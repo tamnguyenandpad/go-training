@@ -2,9 +2,22 @@ package app
 
 import (
 	"context"
+	"time"
 
-	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/domain"
+	domain "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/domain/tenant"
 )
+
+type Output struct {
+	ID        string
+	TenantID  string
+	Email     string
+	Name      string
+	CreatedAt time.Time
+}
+
+type UserAdapter interface {
+	GetUserByID(ctx context.Context, userID string) (*Output, error)
+}
 
 type Application interface {
 	CreateTenant(ctx context.Context, input CreateTenantInput) (*CreateTenantOutput, error)
@@ -17,9 +30,10 @@ type Application interface {
 }
 
 type application struct {
-	tenantRepo domain.Repository
+	tenantRepo  domain.Repository
+	userAdapter UserAdapter
 }
 
-func NewApplication(tenantRepo domain.Repository) Application {
-	return &application{tenantRepo: tenantRepo}
+func NewApplication(tenantRepo domain.Repository, userAdapter UserAdapter) Application {
+	return &application{tenantRepo: tenantRepo, userAdapter: userAdapter}
 }

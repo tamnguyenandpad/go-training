@@ -2,10 +2,11 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/domain"
+	domain "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/domain/user"
 )
 
 type Input struct {
@@ -22,22 +23,38 @@ type Output struct {
 	CreatedAt time.Time
 }
 
+type GetTenantByIDOutput struct {
+	ID         string
+	Name       string
+	OwnerEmail string
+	CreatedAt  time.Time
+}
+
+type TenantAdapter interface {
+	GetTenantByID(ctx context.Context, id string) (*GetTenantByIDOutput, error)
+}
+
 type Application interface {
 	CreateUser(ctx context.Context, input Input) (*Output, error)
 	GetUserByID(ctx context.Context, userID string) (*Output, error)
 }
 
 type application struct {
-	userRepo domain.Repository
+	userRepo      domain.Repository
+	tenantAdapter TenantAdapter
 }
 
-func NewApplication(userRepo domain.Repository) Application {
-	return &application{userRepo: userRepo}
+func NewApplication(userRepo domain.Repository, tenantAdapter TenantAdapter) Application {
+	return &application{userRepo: userRepo, tenantAdapter: tenantAdapter}
 }
 
 func (a *application) CreateUser(ctx context.Context, input Input) (*Output, error) {
 	createdAt := time.Now()
 	userId := uuid.New().String()
+
+	if _, err := a.tenantAdapter.GetTenantByID(context.Background(), input.TenantID); err != nil {
+		return nil, fmt.Errorf("tenant not found")
+	}
 
 	user := domain.User{
 		ID:        userId,

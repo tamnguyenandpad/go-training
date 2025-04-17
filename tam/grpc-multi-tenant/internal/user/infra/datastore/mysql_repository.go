@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/domain"
+	domain "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/domain/user"
 )
 
 type UserMysqlRepository struct {

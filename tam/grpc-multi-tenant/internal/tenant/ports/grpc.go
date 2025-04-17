@@ -7,17 +7,15 @@ import (
 	pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/tenant/v1"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/app"
-	user_app "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/app"
 )
 
 type GrpcServer struct {
 	pb.UnimplementedTenantServiceServer
-	app     app.Application
-	userApp user_app.Application
+	app app.Application
 }
 
-func NewGrpcServer(app app.Application, userApp user_app.Application) pb.TenantServiceServer {
-	return &GrpcServer{app: app, userApp: userApp}
+func NewGrpcServer(app app.Application) pb.TenantServiceServer {
+	return &GrpcServer{app: app}
 }
 
 func (s *GrpcServer) CreateTenant(ctx context.Context, req *pb.CreateTenantRequest) (*pb.CreateTenantResponse, error) {
@@ -45,15 +43,15 @@ func (s *GrpcServer) validateCreateTenantRequest(req *pb.CreateTenantRequest) er
 	if req.Name == "" || req.OwnerEmail == "" {
 		return fmt.Errorf("name and owner_email are required")
 	}
-	if !pkg.EmailRegex.MatchString(req.OwnerEmail) {
+	if !pkg.IsValidEmail(req.OwnerEmail) {
 		return fmt.Errorf("invalid email format")
 	}
 	return nil
 }
 
 func (s *GrpcServer) InviteMember(ctx context.Context, req *pb.InviteMemberRequest) (*pb.InviteMemberResponse, error) {
-	if err := s.validateInviteMemberRequest(ctx, req); err != nil {
-		return nil, err
+	if req.TenantId == "" || req.UserId == "" {
+		return nil, fmt.Errorf("tenant_id and user_id are required")
 	}
 
 	member, err := s.app.CreateMember(ctx, app.CreateMemberInput{
@@ -69,33 +67,9 @@ func (s *GrpcServer) InviteMember(ctx context.Context, req *pb.InviteMemberReque
 	}, nil
 }
 
-func (s *GrpcServer) validateInviteMemberRequest(ctx context.Context, req *pb.InviteMemberRequest) error {
-	if req.TenantId == "" || req.UserId == "" {
-		return fmt.Errorf("tenant_id and user_id are required")
-	}
-	if _, err := s.app.GetTenantByID(ctx, req.TenantId); err != nil {
-		return fmt.Errorf("tenant not found: %v", err)
-	}
-	if _, err := s.userApp.GetUserByID(ctx, req.UserId); err != nil {
-		return fmt.Errorf("user not found: %v", err)
-	}
-	if alreadyJoined := s.app.CheckUserAlreadyAMember(ctx, req.TenantId, req.UserId); alreadyJoined {
-		return fmt.Errorf("user already joined")
-	}
-	member, err := s.app.GetMemberByUserID(ctx, req.UserId)
-	if err != nil {
-		return nil
-	}
-	if member.Status == "pending" {
-		return fmt.Errorf("member is still pending")
-	}
-
-	return nil
-}
-
 func (s *GrpcServer) AcceptInvitation(ctx context.Context, req *pb.AcceptInvitationRequest) (*pb.AcceptInvitationResponse, error) {
-	if err := s.validateAcceptInvitationRequest(ctx, req); err != nil {
-		return nil, err
+	if req.MemberId == "" {
+		return nil, fmt.Errorf("member_id are required")
 	}
 
 	member, err := s.app.UpdateMember(ctx, app.UpdateMemberInput{
@@ -106,20 +80,6 @@ func (s *GrpcServer) AcceptInvitation(ctx context.Context, req *pb.AcceptInvitat
 	}
 
 	return &pb.AcceptInvitationResponse{
-		Status: member.Status,
+		Status: string(member.Status),
 	}, nil
-}
-
-func (s *GrpcServer) validateAcceptInvitationRequest(ctx context.Context, req *pb.AcceptInvitationRequest) error {
-	if req.MemberId == "" {
-		return fmt.Errorf("member_id are required")
-	}
-	member, err := s.app.GetMemberByID(ctx, req.MemberId)
-	if err != nil {
-		return fmt.Errorf("member not found: %v", err)
-	}
-	if member.Status == "accepted" {
-		return fmt.Errorf("member already accepted")
-	}
-	return nil
 }

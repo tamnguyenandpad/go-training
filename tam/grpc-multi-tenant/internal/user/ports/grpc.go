@@ -6,18 +6,16 @@ import (
 
 	pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/user/v1"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg"
-	tenant_app "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/app"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/app"
 )
 
 type GrpcServer struct {
 	pb.UnimplementedUserServiceServer
-	app       app.Application
-	tenantApp tenant_app.Application
+	app app.Application
 }
 
-func NewGrpcServer(app app.Application, tenantApp tenant_app.Application) pb.UserServiceServer {
-	return &GrpcServer{app: app, tenantApp: tenantApp}
+func NewGrpcServer(app app.Application) pb.UserServiceServer {
+	return &GrpcServer{app: app}
 }
 
 func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
@@ -47,11 +45,8 @@ func (s *GrpcServer) validateCreateUserRequest(req *pb.CreateUserRequest) error 
 	if req.TenantId == "" || req.Email == "" || req.Name == "" {
 		return fmt.Errorf("name tenantId, email, name are required")
 	}
-	if !pkg.EmailRegex.MatchString(req.Email) {
+	if !pkg.IsValidEmail(req.Email) {
 		return fmt.Errorf("invalid email format")
-	}
-	if _, err := s.tenantApp.GetTenantByID(context.Background(), req.TenantId); err != nil {
-		return fmt.Errorf("tenant not found")
 	}
 	return nil
 }

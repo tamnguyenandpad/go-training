@@ -12,13 +12,16 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	tenant_pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/tenant/v1"
 	user_pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/user/v1"
+	user_adapter "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/adapter"
 	tenant_app "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/app"
 	tenant_datastore "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/infra/datastore"
 	tenant_ports "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/ports"
+	tenant_adapter "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/adapter"
 	user_app "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/app"
 	user_datastore "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/infra/datastore"
 	user_ports "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/ports"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/test/integration/testutil"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/test/bufconn"
@@ -47,13 +50,17 @@ func (r *ServiceTestHelper) CreateServiceTestHelper(t *testing.T) *ServiceTestHe
 	tenantRepository := tenant_datastore.NewTenantMysqlRepository(db)
 	userRepository := user_datastore.NewUserMysqlRepository(db)
 
+	// Initialize adapter
+	tenantAdapter := tenant_adapter.NewTenantAdapter(tenantRepository)
+	userAdapter := user_adapter.NewUserAdapter(userRepository)
+
 	// Initialize application
-	tenantApplication := tenant_app.NewApplication(tenantRepository)
-	userApplication := user_app.NewApplication(userRepository)
+	tenantApplication := tenant_app.NewApplication(tenantRepository, userAdapter)
+	userApplication := user_app.NewApplication(userRepository, tenantAdapter)
 
 	// Initialize service
-	tenantGrpcService := tenant_ports.NewGrpcServer(tenantApplication, userApplication)
-	userGrpcService := user_ports.NewGrpcServer(userApplication, tenantApplication)
+	tenantGrpcService := tenant_ports.NewGrpcServer(tenantApplication)
+	userGrpcService := user_ports.NewGrpcServer(userApplication)
 
 	// Register service
 	tenant_pb.RegisterTenantServiceServer(grpcServer, tenantGrpcService)
