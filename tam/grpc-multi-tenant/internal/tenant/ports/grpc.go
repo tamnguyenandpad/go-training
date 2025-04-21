@@ -2,10 +2,10 @@ package ports
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/tenant/v1"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg"
+	pkgerrors "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg/errors"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/app"
 )
 
@@ -28,7 +28,7 @@ func (s *GrpcServer) CreateTenant(ctx context.Context, req *pb.CreateTenantReque
 		OwnerEmail: req.OwnerEmail,
 	})
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.FromError(err)
 	}
 
 	return &pb.CreateTenantResponse{
@@ -41,17 +41,17 @@ func (s *GrpcServer) CreateTenant(ctx context.Context, req *pb.CreateTenantReque
 
 func (s *GrpcServer) validateCreateTenantRequest(req *pb.CreateTenantRequest) error {
 	if req.Name == "" || req.OwnerEmail == "" {
-		return fmt.Errorf("name and owner_email are required")
+		return pkgerrors.InvalidArgument("name and owner_email are required")
 	}
 	if !pkg.IsValidEmail(req.OwnerEmail) {
-		return fmt.Errorf("invalid email format")
+		return pkgerrors.InvalidArgument("invalid email format")
 	}
 	return nil
 }
 
 func (s *GrpcServer) InviteMember(ctx context.Context, req *pb.InviteMemberRequest) (*pb.InviteMemberResponse, error) {
 	if req.TenantId == "" || req.UserId == "" {
-		return nil, fmt.Errorf("tenant_id and user_id are required")
+		return nil, pkgerrors.InvalidArgument("tenant_id and user_id are required")
 	}
 
 	member, err := s.app.CreateMember(ctx, app.CreateMemberInput{
@@ -59,7 +59,20 @@ func (s *GrpcServer) InviteMember(ctx context.Context, req *pb.InviteMemberReque
 		UserID:   req.UserId,
 	})
 	if err != nil {
-		return nil, err
+		// Handle specific error cases
+		errMsg := err.Error()
+		switch {
+		case errMsg == "tenant not found":
+			return nil, pkgerrors.NotFound("tenant", req.TenantId)
+		case errMsg == "user not found":
+			return nil, pkgerrors.NotFound("user", req.UserId)
+		case errMsg == "user already joined":
+			return nil, pkgerrors.AlreadyExists("user is already a member of this tenant")
+		case errMsg == "member is still pending":
+			return nil, pkgerrors.FailedPrecondition("member invitation is still pending")
+		default:
+			return nil, pkgerrors.InternalError(errMsg)
+		}
 	}
 
 	return &pb.InviteMemberResponse{
@@ -69,14 +82,23 @@ func (s *GrpcServer) InviteMember(ctx context.Context, req *pb.InviteMemberReque
 
 func (s *GrpcServer) AcceptInvitation(ctx context.Context, req *pb.AcceptInvitationRequest) (*pb.AcceptInvitationResponse, error) {
 	if req.MemberId == "" {
-		return nil, fmt.Errorf("member_id are required")
+		return nil, pkgerrors.InvalidArgument("member_id is required")
 	}
 
 	member, err := s.app.UpdateMember(ctx, app.UpdateMemberInput{
 		MemberID: req.MemberId,
 	})
 	if err != nil {
-		return nil, err
+		// Handle specific error cases
+		errMsg := err.Error()
+		switch {
+		case errMsg == "member not found":
+			return nil, pkgerrors.NotFound("member", req.MemberId)
+		case errMsg == "member already accepted":
+			return nil, pkgerrors.AlreadyExists("invitation has already been accepted")
+		default:
+			return nil, pkgerrors.InternalError(errMsg)
+		}
 	}
 
 	return &pb.AcceptInvitationResponse{

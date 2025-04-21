@@ -2,10 +2,10 @@ package ports
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/user/v1"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg"
+	pkgerrors "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg/errors"
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/user/app"
 )
 
@@ -29,7 +29,11 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 		TenantID: req.TenantId,
 	})
 	if err != nil {
-		return nil, err
+		errMsg := err.Error()
+		if errMsg == "tenant not found" {
+			return nil, pkgerrors.NotFound("tenant", req.TenantId)
+		}
+		return nil, pkgerrors.FromError(err)
 	}
 
 	return &pb.CreateUserResponse{
@@ -43,10 +47,10 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 
 func (s *GrpcServer) validateCreateUserRequest(req *pb.CreateUserRequest) error {
 	if req.TenantId == "" || req.Email == "" || req.Name == "" {
-		return fmt.Errorf("name tenantId, email, name are required")
+		return pkgerrors.InvalidArgument("tenant_id, email, and name are required")
 	}
 	if !pkg.IsValidEmail(req.Email) {
-		return fmt.Errorf("invalid email format")
+		return pkgerrors.InvalidArgument("invalid email format")
 	}
 	return nil
 }

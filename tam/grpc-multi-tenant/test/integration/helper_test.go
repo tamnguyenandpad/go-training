@@ -3,7 +3,7 @@ package integration
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	tenant_pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/tenant/v1"
 	user_pb "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/gen/go/user/v1"
+	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/pkg/logger"
 	user_adapter "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/adapter"
 	tenant_app "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/app"
 	tenant_datastore "github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/internal/tenant/infra/datastore"
@@ -23,12 +24,19 @@ import (
 	"github.com/tuannguyenandpadcojp/go-training/tam/grpc-multi-tenant/test/integration/testutil"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/test/bufconn"
 )
 
+const (
+	host = "localhost"
+	port = "50051"
+)
+
 var (
 	helperWithoutCtx = &ServiceTestHelper{}
+	log              = logger.InitLogger(logger.Debug, "integration-tests")
 )
 
 type ServiceTestHelper struct {
@@ -39,43 +47,46 @@ type ServiceTestHelper struct {
 }
 
 func (r *ServiceTestHelper) CreateServiceTestHelper(t *testing.T) *ServiceTestHelper {
-	db, _ := testutil.InitDB(t)
+	log.Info("Creating service test helper", map[string]interface{}{"test": t.Name()})
+	db, dbName := testutil.InitDB(t)
+	log.Debug("Test database initialized", map[string]interface{}{"dbName": dbName})
 
 	// Create gRPC server
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	log.Println("gRPC server is running on port 50051...")
+	log.Info("gRPC test server initialized", nil)
 
 	// Initialize repo
 	tenantRepository := tenant_datastore.NewTenantMysqlRepository(db)
 	userRepository := user_datastore.NewUserMysqlRepository(db)
+	log.Debug("Test repositories initialized", nil)
 
 	// Initialize adapter
 	tenantAdapter := tenant_adapter.NewTenantAdapter(tenantRepository)
 	userAdapter := user_adapter.NewUserAdapter(userRepository)
+	log.Debug("Test adapters initialized", nil)
 
 	// Initialize application
 	tenantApplication := tenant_app.NewApplication(tenantRepository, userAdapter)
 	userApplication := user_app.NewApplication(userRepository, tenantAdapter)
+	log.Debug("Test applications initialized", nil)
 
 	// Initialize service
 	tenantGrpcService := tenant_ports.NewGrpcServer(tenantApplication)
 	userGrpcService := user_ports.NewGrpcServer(userApplication)
+	log.Debug("Test gRPC services initialized", nil)
 
 	// Register service
 	tenant_pb.RegisterTenantServiceServer(grpcServer, tenantGrpcService)
 	user_pb.RegisterUserServiceServer(grpcServer, userGrpcService)
-
-	// if err := grpcServer.Serve(listener); err != nil {
-	// 	log.Fatalf("Failed to serve: %v", err)
-	// }
+	log.Debug("Test services registered", nil)
 
 	listener := bufconn.Listen(1024 * 1024)
 
 	go func() {
-		defer grpcServer.GracefulStop() // ????
+		defer grpcServer.GracefulStop()
 		if err := grpcServer.Serve(listener); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
+			log.Error("Failed to serve test gRPC server", map[string]interface{}{"error": err.Error()})
 		}
 	}()
 
@@ -93,19 +104,21 @@ func (r *ServiceTestHelper) CreateServiceTestHelper(t *testing.T) *ServiceTestHe
 		ctx = r.ctx
 	}
 
-	conn, err := grpc.DialContext(
-		ctx,
-		"bufnet",
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("%s:%s", host, port),
 		grpc.WithContextDialer(bufDialer),
-		grpc.WithInsecure())
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		log.Error("Failed to create gRPC client", map[string]interface{}{"error": err.Error()})
 		t.Fatal(err)
 	}
 
 	client := tenant_pb.NewTenantServiceClient(conn)
 	userClient := user_pb.NewUserServiceClient(conn)
+	log.Info("Test clients initialized", nil)
 
 	t.Cleanup(func() {
+		log.Debug("Cleaning up test resources", map[string]interface{}{"test": t.Name()})
 		conn.Close()
 		grpcServer.GracefulStop()
 	})
